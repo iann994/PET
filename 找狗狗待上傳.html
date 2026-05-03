@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペットサイト</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+        body {
+            background-color: #ffffff;
+            scroll-behavior: smooth;
+        }
+        /* 每區塊滿版置中 */
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            padding: 0 40px;
+        }
+
+        /* ========== 主視覺 ========== */
+        .hero-wrap {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .hero-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .login-elements {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .login-elements img {
+            position: absolute;
+            opacity: 0;
+        }
+        .element-L { top: 1%; left: 4%; }
+        .element-O { top: 28%; left: 28%; }
+        .element-IN { top: 30%; left: 42%; }
+
+        .login-form {
+            position: absolute;
+            right: 6%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            background-color: rgba(255,255,255,0.6);
+            border-radius: 20px;
+            padding: 30px;
+            opacity: 0;
+        }
+        .input-wrapper { margin: 20px 0; }
+        .pink-input {
+            width: 220px;
+            height: 48px;
+            background-color: #f8c8c8;
+            border: none;
+            border-radius: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 0 16px;
+            font-size: 16px;
+            color: #333;
+        }
+        .pink-input:focus { outline: none; box-shadow: 0 0 0 2px #f8a8a8; }
+        .label {
+            display: block;
+            text-align: center;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #222;
+        }
+
+        /* ========== ペット追跡 ========== */
+        .pet-header {
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+            font-size: 18px;
+        }
+        .pet-header .active { color: #000; font-weight: bold; }
+        .pet-header .inactive { color: #cccccc; }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+            align-items: start;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .status-card {
+            background-color: #ffeef0;
+            padding: 30px;
+            border-radius: 12px;
+            position: relative;
+        }
+        .status-dot {
+            width: 60px;
+            height: 60px;
+            background-color: #ff2222;
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+        }
+        .status-text {
+            margin-left: 90px;
+            margin-top: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .call-btn {
+            margin-top: 30px;
+            width: 100%;
+            padding: 16px;
+            border: 3px solid #ff3333;
+            background-color: #FDC4C4;
+            color: #000;
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            cursor: pointer;
+        }
+        .info-card {
+            background-color: #ffe6cc;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .info-title {
+            font-size: 16px;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(to right, #ffe6cc, #ff6666);
+            border-radius: 4px;
+            position: relative;
+        }
+        .progress-dog {
+            position: absolute;
+            right: 0;
+            top: -16px;
+            font-size: 32px;
+        }
+        .map-container {
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            height: 500px;
+        }
+        .map-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .location-dot {
+            width: 38px;
+            height: 38px;
+            background-color: rgba(255, 100, 100, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            top: 220px;
+            left: 260px;
+            z-index: 1;
+        }
+        .location-dot::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(255, 100, 100, 0.4);
+            animation: pulse 2s infinite ease-out;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+        }
+
+        /* ========== 登録ペット區塊 ========== */
+        .pet-register-section { position: relative; }
+        .dog-deco {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200px;
+            pointer-events: none;
+        }
+        .register-title {
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            margin-bottom: 60px;
+        }
+        .pet-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            justify-items: center;
+        }
+        .pet-card {
+            width: 260px;
+            height: 180px;
+            background-color: #f1f1f1;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            cursor: default;
+        }
+        .add-card {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: #999;
+            transition: 0.2s;
+        }
+        .add-card:hover { background-color: #e9e9e9; }
+
+        /* ========== 彈窗樣式 ========== */
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-box {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 420px;
+        }
+        .modal-box h3 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 22px;
+            letter-spacing: 2px;
+        }
+        .modal-item {
+            margin-bottom: 20px;
+        }
+        .modal-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .modal-item input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+        .modal-btn-wrap {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-close { background-color: #ddd; }
+        .btn-submit { background-color: #FDC4C4; }
+
+        /* ========== 新：気分履歴 心情紀錄區塊 ========== */
+        .mood-section {
+            position: relative;
+        }
+        .mood-title {
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            margin-bottom: 60px;
+        }
+        .mood-header {
+            text-align: right;
+            margin-bottom: 40px;
+            padding-right: 10%;
+        }
+        .check-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: #d6f5d6;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-size: 20px;
+            color: #4caf50;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        .update-text {
+            display: inline-block;
+            font-size: 16px;
+            letter-spacing: 4px;
+            color: #999;
+            vertical-align: middle;
+        }
+        .mood-list {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            padding-left: 10%;
+        }
+        .mood-item {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+        .mood-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+        .mood-name {
+            font-size: 24px;
+            letter-spacing: 4px;
+            font-weight: bold;
+            min-width: 150px;
+        }
+        .mood-time {
+            font-size: 16px;
+            letter-spacing: 4px;
+            color: #666;
+            margin-left: auto;
+            padding-right: 10%;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 主視覺 -->
+<div class="hero-wrap">
+    <div class="hero-bg">
+        <img src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777792673/Group_2_1_dym9gq.png" alt="背景">
+    </div>
+    <div class="login-elements">
+        <img class="element-L" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777792143/L_pufmxk.png" alt="L">
+        <img class="element-O" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777792143/O_hykv2y.png" alt="O">
+        <img class="element-IN" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777792143/Group_1_pfjgbv.png" alt="IN">
+    </div>
+    <div class="login-form">
+        <div class="input-wrapper">
+            <input type="text" class="pink-input" placeholder="ID">
+            <span class="label">I D</span>
+        </div>
+        <div class="input-wrapper">
+            <input type="password" class="pink-input" placeholder="Password">
+            <span class="label">P A S S W O R D</span>
+        </div>
+    </div>
+</div>
+
+<!-- ペット追跡 -->
+<section id="pet-page">
+    <div class="container">
+        <div class="pet-header">
+            <span class="active">マルちゃん</span> | <span class="inactive">愛ちゃん</span>
+        </div>
+        <div class="content-wrapper">
+            <div class="left-panel">
+                <div class="status-card">
+                    <div class="status-dot"></div>
+                    <div class="status-text">状況・ステータス</div>
+                    <button class="call-btn">呼び出し</button>
+                </div>
+                <div class="info-card">
+                    <div class="info-title">現在地からの距離</div>
+                    <div class="info-value">30 mins</div>
+                    <div class="progress-bar">
+                        <span class="progress-dog">🐶</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-title">経過時間</div>
+                    <div class="info-value">20 mins</div>
+                </div>
+            </div>
+            <div class="map-container">
+                <img src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777799213/image_1_gji2hw.png" alt="map">
+                <div class="location-dot"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 登録されたペット -->
+<section id="register-page" class="pet-register-section">
+    <img class="dog-deco" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777803869/Group_19_bsl8qa.png" alt="犬デコ">
+    <div class="container">
+        <h2 class="register-title">登録されたペット</h2>
+        <div class="pet-grid">
+            <div class="pet-card">🐶</div>
+            <div class="pet-card">😼</div>
+            <div class="pet-card add-card" id="openModal">+</div>
+        </div>
+    </div>
+</section>
+
+<!-- 新：気分履歴 心情紀錄區塊 -->
+<section id="mood-page" class="mood-section">
+    <div class="container">
+        <h2 class="mood-title">気分履歴</h2>
+        <div class="mood-header">
+            <span class="check-icon">✓</span>
+            <span class="update-text">UPDATED AM 1:45</span>
+        </div>
+        <div class="mood-list">
+            <div class="mood-item">
+                <img class="mood-icon" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777804503/Group_21_qirhdp.png" alt="気分が良い">
+                <span class="mood-name">気分が良い</span>
+                <span class="mood-time">PM 3:00</span>
+            </div>
+            <div class="mood-item">
+                <img class="mood-icon" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777804503/Group_22_3_qzxmsa.png" alt="普通">
+                <span class="mood-name">普通</span>
+                <span class="mood-time">PM 6:23</span>
+            </div>
+            <div class="mood-item">
+                <img class="mood-icon" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777804503/Group_20_1_vp1htg.png" alt="眠い">
+                <span class="mood-name">眠い</span>
+                <span class="mood-time">PM 10:23</span>
+            </div>
+            <div class="mood-item">
+                <img class="mood-icon" src="https://res.cloudinary.com/do3p1vjeh/image/upload/v1777804503/Group_23_1_aftqea.png" alt="遊びたい">
+                <span class="mood-name">遊びたい</span>
+                <span class="mood-time">AM 1:40</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 彈窗：ペット登録 -->
+<div class="modal-mask" id="modalMask">
+    <div class="modal-box">
+        <h3>ペット新規登録</h3>
+        <div class="modal-item">
+            <label>ペット名</label>
+            <input type="text" placeholder="ペットの名前を入力">
+        </div>
+        <div class="modal-item">
+            <label>趣味</label>
+            <input type="text" placeholder="趣味・好きなこと">
+        </div>
+        <div class="modal-item">
+            <label>バッテリ交換日</label>
+            <input type="date">
+        </div>
+        <div class="modal-btn-wrap">
+            <button class="modal-btn btn-close" id="closeModal">閉じる</button>
+            <button class="modal-btn btn-submit">登録</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // LOGIN動畫
+    const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+    tl
+    .fromTo(".element-L", { opacity: 0, y: -120 }, { opacity: 1, y: 0, duration: 1 })
+    .fromTo(".element-O", { opacity: 0, y: -120 }, { opacity: 1, y: 0, duration: 1 }, "-=0.7")
+    .fromTo(".element-IN", { opacity: 0, x: -180 }, { opacity: 1, x: 0, duration: 1.2 }, "-=0.6")
+    .fromTo(".login-form", { opacity: 0 }, { opacity: 1, duration: 1 }, 0);
+
+    // 載入自動滾動到追蹤區塊
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('pet-page').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 500);
+    });
+
+    // 彈窗控制
+    const openModal = document.getElementById('openModal');
+    const modalMask = document.getElementById('modalMask');
+    const closeModal = document.getElementById('closeModal');
+
+    openModal.addEventListener('click', () => {
+        modalMask.style.display = 'flex';
+    });
+    closeModal.addEventListener('click', () => {
+        modalMask.style.display = 'none';
+    });
+    modalMask.addEventListener('click', (e) => {
+        if(e.target === modalMask) modalMask.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>
